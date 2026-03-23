@@ -1,6 +1,4 @@
-"""
-Flask app for Vercel + local dev. Single file so the serverless bundle always includes all routes.
-"""
+"""Flask API as Vercel Python function (`/api/index`); static UI lives in `public/`."""
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -44,10 +42,5 @@ def delete_todo(todo_id):
     for i, t in enumerate(todos):
         if t["id"] == todo_id:
             todos.pop(i)
-            # Avoid 204 + empty body; some serverless/WSGI stacks mishandle it.
             return jsonify({"ok": True}), 200
     return jsonify({"error": "not found"}), 404
-
-
-if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True)

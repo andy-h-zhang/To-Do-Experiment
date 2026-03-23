@@ -1,0 +1,8 @@
+.DS_Store
+public/
+frontend/dist/
+frontend/node_modules/
+backend/.venv/
+__pycache__/
+*.pyc
+.vercel

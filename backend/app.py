@@ -1,48 +1,13 @@
-from flask import Flask, jsonify, request
-from flask_cors import CORS
+"""Local entry: run `python app.py` from this directory (adds repo root to path)."""
 
-app = Flask(__name__)
-CORS(app)
+import sys
+from pathlib import Path
 
-todos = []
-_next_id = 1
+_root = Path(__file__).resolve().parent.parent
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
 
-
-@app.get("/api/todos")
-def list_todos():
-    return jsonify(todos)
-
-
-@app.post("/api/todos")
-def add_todo():
-    global _next_id
-    data = request.get_json(silent=True) or {}
-    text = (data.get("text") or "").strip()
-    if not text:
-        return jsonify({"error": "text required"}), 400
-    item = {"id": _next_id, "text": text, "done": False}
-    _next_id += 1
-    todos.append(item)
-    return jsonify(item), 201
-
-
-@app.patch("/api/todos/<int:todo_id>")
-def toggle_todo(todo_id):
-    for t in todos:
-        if t["id"] == todo_id:
-            t["done"] = not t["done"]
-            return jsonify(t)
-    return jsonify({"error": "not found"}), 404
-
-
-@app.delete("/api/todos/<int:todo_id>")
-def delete_todo(todo_id):
-    for i, t in enumerate(todos):
-        if t["id"] == todo_id:
-            todos.pop(i)
-            return "", 204
-    return jsonify({"error": "not found"}), 404
-
+from app import app  # noqa: E402
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=True)

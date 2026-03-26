@@ -1,5 +1,6 @@
 .DS_Store
 public/
+api/static/
 frontend/dist/
 frontend/node_modules/
 backend/.venv/

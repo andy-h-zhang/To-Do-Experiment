@@ -1,11 +1,14 @@
 """Flask API as Vercel Python function (`/api/index`); static UI lives in `public/`."""
 
+import os
 import urllib.parse
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
+
+STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
 todos = []
 _next_id = 1
@@ -47,13 +50,25 @@ def delete_todo(todo_id):
     return jsonify({"error": "not found"}), 404
 
 
+@app.route("/assets/<path:filename>")
+def serve_assets(filename):
+    return send_from_directory(os.path.join(STATIC_DIR, "assets"), filename)
+
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_frontend(path):
+    return send_from_directory(STATIC_DIR, "index.html")
+
+
 def _vercel_path_fix(wsgi_app):
     """Restore original PATH_INFO when Vercel's rewrite overwrites it with the destination.
 
     Vercel sets PATH_INFO to the rewrite *destination* (/api/index) rather than
-    the original request path (/api/todos).  It also sends the captured route
-    parameters in the x-now-route-matches header, e.g. "path=todos%2F1", which
-    lets us reconstruct the real path before Flask does its URL matching.
+    the original request path.  It also sends the captured route parameters in
+    the x-now-route-matches header (e.g. "path=api%2Ftodos" for named captures
+    or "1=api%2Ftodos" for positional captures), which lets us reconstruct the
+    real path before Flask does its URL matching.
     """
     def application(environ, start_response):
         if environ.get("PATH_INFO") == "/api/index":
@@ -64,10 +79,12 @@ def _vercel_path_fix(wsgi_app):
                     for part in raw.split("&")
                     if "=" in part
                 )
-                path = urllib.parse.unquote(params.get("path", ""))
-                if path:
-                    environ = environ.copy()
-                    environ["PATH_INFO"] = "/api/" + path
+                # Named capture (:path*) → "path=...", positional (.*) → "1=..."
+                path = urllib.parse.unquote(
+                    params.get("path") or params.get("1") or ""
+                )
+                environ = environ.copy()
+                environ["PATH_INFO"] = "/" + path if path else "/"
         return wsgi_app(environ, start_response)
     return application
 

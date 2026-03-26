@@ -1,14 +1,10 @@
-import path from "path";
-import { fileURLToPath } from "url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: path.join(repoRoot, "public"),
+    outDir: "../public",
     emptyOutDir: true,
   },
   server: {
